@@ -1,117 +1,113 @@
-import { useState } from "react";
-
-import { Button } from "@/components/common/button";
-import { Input } from "@/components/common/input";
+import { useEffect, useRef, useState } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 
 type QRScannerProps = {
-  onScan: (studentId: string) => void;
-  onStop: () => void;
+  onScan: (code: string) => void;
+  onError: (message: string) => void;
 };
 
-export function QRScanner({
-  onScan,
-  onStop,
-}: QRScannerProps) {
-  const [qrValue, setQrValue] = useState("");
-  const [error, setError] = useState("");
+export default function QRScanner({ onScan, onError }: QRScannerProps) {
+  const [error, setError] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const onScanRef = useRef(onScan);
+  const onErrorRef = useRef(onError);
+  onScanRef.current = onScan;
+  onErrorRef.current = onError;
 
-  const handleScan = () => {
-    const value = qrValue.trim();
+  useEffect(() => {
+    let cancelled = false;
+    let lastCode = "";
+    let clearTimer: ReturnType<typeof setTimeout> | undefined;
+    setError(false);
 
-    if (!value) {
-      setError("Please enter a QR code value.");
+    const resetClearTimer = () => {
+      if (clearTimer) clearTimeout(clearTimer);
+      // If the same QR code stops being decoded (moved out of frame),
+      // forget it so presenting it again re-triggers a scan.
+      clearTimer = setTimeout(() => {
+        lastCode = "";
+      }, 2500);
+    };
+
+    let scanner: Html5Qrcode | null = null;
+
+    try {
+      const container = document.getElementById("qr-reader");
+      if (!container) return;
+
+      scanner = new Html5Qrcode("qr-reader");
+      scannerRef.current = scanner;
+    } catch {
+      if (!cancelled) {
+        setError(true);
+        onErrorRef.current("Scanner initialization failed. Use Manual Select instead.");
+      }
       return;
     }
 
-    setError("");
-    onScan(value);
-    setQrValue("");
-  };
+    scanner
+      .start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        (decodedText) => {
+          if (cancelled) return;
+
+          const code = decodedText.trim();
+          if (!code) return;
+
+          // Emit a code only when a different QR code is detected, or when
+          // the previous code was out of frame long enough to reset. This
+          // prevents re-firing the same code every few frames while the
+          // same QR code stays in the camera view.
+          if (code !== lastCode) {
+            lastCode = code;
+            resetClearTimer();
+            onScanRef.current(code);
+          } else {
+            // Still seeing the same code — keep it in frame, don't re-emit.
+            resetClearTimer();
+          }
+        },
+        () => undefined
+      )
+      .catch(() => {
+        if (!cancelled) {
+          setError(true);
+          onErrorRef.current("Camera access is unavailable. Use Manual Select instead.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      if (clearTimer) clearTimeout(clearTimer);
+      const active = scannerRef.current;
+      scannerRef.current = null;
+
+      if (active) {
+        active
+          .stop()
+          .catch(() => undefined)
+          .finally(() => {
+            try {
+              active.clear();
+            } catch {
+              // already cleared
+            }
+          });
+      }
+    };
+  }, []);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-slate-900">
-          QR Code Scanner
-        </h2>
-
-        <p className="mt-1 text-sm text-slate-500">
-          Scan a student's QR code to record their attendance.
-        </p>
+    <div className="flex flex-col items-center">
+      <div className="flex h-72 w-full max-w-md items-center justify-center overflow-hidden rounded-xl">
+        <div id="qr-reader" className="w-full" />
       </div>
-
-      {/* Scanner Area */}
-      <div className="mx-auto flex max-w-md flex-col items-center">
-        <div className="relative flex h-64 w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-blue-400 bg-slate-50">
-          <div className="absolute left-8 right-8 top-1/2 h-0.5 bg-blue-500" />
-
-          <div className="text-center">
-            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-xl bg-blue-100">
-              <span className="text-2xl font-bold text-blue-600">
-                QR
-              </span>
-            </div>
-
-            <p className="text-sm font-medium text-slate-700">
-              Scanner Ready
-            </p>
-
-            <p className="mt-1 text-xs text-slate-500">
-              Waiting for QR code...
-            </p>
-          </div>
-        </div>
-
-        {/* Manual QR Input */}
-        <div className="mt-6 w-full">
-          <label
-            htmlFor="qrValue"
-            className="mb-2 block text-sm font-medium text-slate-700"
-          >
-            QR Code Value
-          </label>
-
-          <Input
-            id="qrValue"
-            type="text"
-            placeholder="Enter student ID or QR value"
-            value={qrValue}
-            onChange={(event) => {
-              setQrValue(event.target.value);
-              setError("");
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                handleScan();
-              }
-            }}
-          />
-
-          {error && (
-            <p className="mt-2 text-sm text-red-600">
-              {error}
-            </p>
-          )}
-
-          <Button
-            type="button"
-            onClick={handleScan}
-            className="mt-4 w-full"
-          >
-            Simulate QR Scan
-          </Button>
-        </div>
-
-        {/* Stop Button */}
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onStop}
-          className="mt-4 w-full"
-        >
-          Stop Attendance
-        </Button>
-      </div>
+      <p className="mt-4 text-sm text-slate-500">
+        {error
+          ? "Camera unavailable. Click Manual Select above."
+          : "Allow camera access and align the QR code within the frame."}
+      </p>
     </div>
   );
 }

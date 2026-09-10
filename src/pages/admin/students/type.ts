@@ -7,6 +7,7 @@ export type Student = {
   email: string;
   phone: string;
   active: boolean;
+  qrValue: string;
 };
 
 export type StudentFormData = Omit<Student, "id">;

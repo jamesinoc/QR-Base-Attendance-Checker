@@ -1,8 +1,10 @@
-import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
+
+import { Download, Plus, Search } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 
 import { Button } from "@/components/common/button";
-import { Input } from "@/components/common/input";
+import { useApp } from "@/context/appcontext";
 
 import StudentModal from "./studentmodal";
 import StudentTable from "./studenttable";
@@ -16,47 +18,51 @@ const emptyStudent: StudentFormData = {
   email: "",
   phone: "",
   active: true,
+  qrValue: "",
 };
 
 export default function Students() {
-  const [students, setStudents] = useState<Student[]>([]);
+  const {
+    students,
+    addStudent,
+    updateStudent,
+    deleteStudent,
+  } = useApp();
 
-  const [search, setSearch] = useState("");
-
-  const [showModal, setShowModal] = useState(false);
-
-  const [editingStudent, setEditingStudent] =
-    useState<Student | null>(null);
-
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] =
     useState<StudentFormData>(emptyStudent);
+  const [qrStudent, setQrStudent] = useState<Student | null>(null);
 
   const filteredStudents = useMemo(() => {
-    const query = search.toLowerCase().trim();
+    const search = query.toLowerCase().trim();
 
-    if (!query) {
+    if (!search) {
       return students;
     }
 
-    return students.filter(
-      (student) =>
-        student.studentId
-          .toLowerCase()
-          .includes(query) ||
-        student.name.toLowerCase().includes(query) ||
-        student.course.toLowerCase().includes(query) ||
-        student.email.toLowerCase().includes(query)
+    return students.filter((student: Student) =>
+      [
+        student.studentId,
+        student.name,
+        student.course,
+        student.email,
+      ].some((value) =>
+        value.toLowerCase().includes(search)
+      )
     );
-  }, [students, search]);
+  }, [students, query]);
 
-  const openAddModal = () => {
-    setEditingStudent(null);
+  const handleOpenAdd = () => {
+    setEditing(null);
     setForm(emptyStudent);
-    setShowModal(true);
+    setOpen(true);
   };
 
-  const openEditModal = (student: Student) => {
-    setEditingStudent(student);
+  const handleOpenEdit = (student: Student) => {
+    setEditing(student);
 
     setForm({
       studentId: student.studentId,
@@ -66,55 +72,51 @@ export default function Students() {
       email: student.email,
       phone: student.phone,
       active: student.active,
+      qrValue: student.qrValue,
     });
 
-    setShowModal(true);
+    setOpen(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingStudent(null);
-    setForm(emptyStudent);
-  };
-
-  const handleSubmit = (
-    event: FormEvent<HTMLFormElement>
-  ) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (
-      !form.studentId ||
-      !form.name ||
-      !form.email ||
-      !form.phone
+      !form.studentId.trim() ||
+      !form.name.trim() ||
+      !form.email.trim() ||
+      !form.phone.trim()
     ) {
       return;
     }
 
-    if (editingStudent) {
-      setStudents((currentStudents) =>
-        currentStudents.map((student) =>
-          student.id === editingStudent.id
-            ? {
-                ...student,
-                ...form,
-              }
-            : student
-        )
-      );
+    if (!/^\d+$/.test(form.studentId)) {
+      return;
+    }
+
+    if (!/^\d+$/.test(form.phone)) {
+      return;
+    }
+
+    if (editing) {
+      updateStudent({
+        ...editing,
+        ...form,
+        qrValue: form.studentId,
+      });
     } else {
       const newStudent: Student = {
         id: Date.now(),
         ...form,
+        qrValue: form.studentId,
       };
 
-      setStudents((currentStudents) => [
-        ...currentStudents,
-        newStudent,
-      ]);
+      addStudent(newStudent);
     }
 
-    closeModal();
+    setOpen(false);
+    setEditing(null);
+    setForm(emptyStudent);
   };
 
   const handleDelete = (id: number) => {
@@ -126,16 +128,51 @@ export default function Students() {
       return;
     }
 
-    setStudents((currentStudents) =>
-      currentStudents.filter(
-        (student) => student.id !== id
+    deleteStudent(id);
+  };
+
+  const exportCsv = () => {
+    const rows = [
+      [
+        "Student ID",
+        "Name",
+        "Course",
+        "Year Level",
+        "Email",
+        "Phone",
+      ],
+      ...filteredStudents.map((s) => [
+        s.studentId,
+        s.name,
+        s.course,
+        s.yearLevel,
+        s.email,
+        s.phone,
+      ]),
+    ];
+
+    const csv = rows
+      .map((row) =>
+        row
+          .map((cell) => `"${cell.replace(/"/g, '""')}"`)
+          .join(",")
       )
-    );
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "students.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Page Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
@@ -143,44 +180,112 @@ export default function Students() {
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage students registered in the attendance
-            system.
+            Manage student profiles and QR codes.
           </p>
         </div>
 
-        <Button onClick={openAddModal}>
-          + Add Student
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={exportCsv}
+          >
+            <Download size={17} />
+            Export CSV
+          </Button>
+
+          <Button
+            type="button"
+            onClick={handleOpenAdd}
+          >
+            <Plus size={17} />
+            Add Student
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <Input
-          type="search"
-          placeholder="Search by student ID, name, course, or email..."
-          value={search}
-          onChange={(event) =>
-            setSearch(event.target.value)
-          }
-        />
+        <div className="relative">
+          <Search
+            size={17}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+
+          <input
+            type="text"
+            placeholder="Search student..."
+            value={query}
+            onChange={(event) =>
+              setQuery(event.target.value)
+            }
+            className="w-full rounded-lg border border-slate-300 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </div>
       </div>
 
-      {/* Table */}
+      {/* Student Table */}
       <StudentTable
         students={filteredStudents}
-        onEdit={openEditModal}
+        onEdit={handleOpenEdit}
         onDelete={handleDelete}
+        onQr={setQrStudent}
       />
 
-      {/* Modal */}
-      {showModal && (
+      {/* Student Modal */}
+      {open && (
         <StudentModal
+          isEditing={editing !== null}
           form={form}
-          isEditing={editingStudent !== null}
           onChange={setForm}
           onSubmit={handleSubmit}
-          onClose={closeModal}
+          onClose={() => {
+            setOpen(false);
+            setEditing(null);
+            setForm(emptyStudent);
+          }}
         />
+      )}
+
+      {/* QR Code Modal */}
+      {qrStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  QR Code — {qrStudent.name}
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setQrStudent(null)}
+                className="text-2xl text-slate-400 hover:text-slate-700"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* QR Content */}
+            <div className="flex flex-col items-center gap-4 p-6">
+              <QRCodeCanvas
+                value={qrStudent.qrValue || qrStudent.studentId}
+                size={230}
+                includeMargin
+              />
+
+              <strong className="text-sm font-semibold text-slate-900">
+                {qrStudent.studentId}
+              </strong>
+
+              <p className="text-center text-sm text-slate-500">
+                Use this QR code for attendance scanning.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

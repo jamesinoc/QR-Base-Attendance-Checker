@@ -12,8 +12,8 @@ const navigation = [
     path: "/admin/students",
   },
   {
-    name: "Classes",
-    path: "/admin/classes",
+    name: "Attendance History",
+    path: "/admin/history",
   },
   {
     name: "Attendance",

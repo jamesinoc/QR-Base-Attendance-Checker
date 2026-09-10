@@ -99,8 +99,7 @@ export default function StudentForm({
             <option value="BSIT">BSIT</option>
             <option value="BSCS">BSCS</option>
             <option value="BSIS">BSIS</option>
-            <option value="BSE">BSE</option>
-            <option value="BSBA">BSBA</option>
+            <option value="BSEd">BSEd</option>
           </select>
         </div>
 

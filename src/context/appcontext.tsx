@@ -22,6 +22,8 @@ type AppContextType = {
     id: number,
     status: AttendanceRecord["status"]
   ) => void;
+
+  resetDemoData: () => void;
 };
 
 const AppContext = createContext<AppContextType | undefined>(
@@ -86,6 +88,11 @@ export function AppProvider({
     );
   };
 
+  const resetDemoData = () => {
+    setStudents([]);
+    setAttendance([]);
+  };
+
   const value = useMemo(
     () => ({
       students,
@@ -95,6 +102,7 @@ export function AppProvider({
       deleteStudent,
       addAttendance,
       updateAttendanceStatus,
+      resetDemoData,
     }),
     [students, attendance]
   );

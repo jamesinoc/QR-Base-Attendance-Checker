@@ -1,4 +1,5 @@
-import { Button } from "@/components/common/button";
+import { Edit3, Trash2 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 
 import type { Student } from "./type";
 
@@ -6,12 +7,14 @@ type StudentTableProps = {
   students: Student[];
   onEdit: (student: Student) => void;
   onDelete: (id: number) => void;
+  onQr: (student: Student) => void;
 };
 
 export default function StudentTable({
   students,
   onEdit,
   onDelete,
+  onQr,
 }: StudentTableProps) {
   if (students.length === 0) {
     return (
@@ -30,11 +33,11 @@ export default function StudentTable({
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-225">
+        <table className="w-full min-w-[800px]">
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
               <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Student ID
+                ID
               </th>
 
               <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -46,23 +49,19 @@ export default function StudentTable({
               </th>
 
               <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Year
+                Year Level
               </th>
 
               <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Email
-              </th>
-
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Phone
+                Contact
               </th>
 
               <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Status
               </th>
 
-              <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Actions
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Action
               </th>
             </tr>
           </thead>
@@ -77,8 +76,13 @@ export default function StudentTable({
                   {student.studentId}
                 </td>
 
-                <td className="px-6 py-4 text-sm text-slate-700">
-                  {student.name}
+                <td className="px-6 py-4">
+                  <div className="text-sm font-medium text-slate-900">
+                    {student.name}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {student.email}
+                  </div>
                 </td>
 
                 <td className="px-6 py-4 text-sm text-slate-700">
@@ -87,10 +91,6 @@ export default function StudentTable({
 
                 <td className="px-6 py-4 text-sm text-slate-700">
                   {student.yearLevel}
-                </td>
-
-                <td className="px-6 py-4 text-sm text-slate-700">
-                  {student.email}
                 </td>
 
                 <td className="px-6 py-4 text-sm text-slate-700">
@@ -110,23 +110,36 @@ export default function StudentTable({
                 </td>
 
                 <td className="px-6 py-4">
-                  <div className="flex justify-end gap-2">
-                    <Button
+                  <div className="flex items-center gap-2">
+                    <button
                       type="button"
-                      variant="secondary"
-                      onClick={() => onEdit(student)}
+                      onClick={() => onQr(student)}
+                      title="QR Code"
+                      className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     >
-                      Edit
-                    </Button>
+                      <QRCodeCanvas
+                        value={student.qrValue || student.studentId}
+                        size={25}
+                      />
+                    </button>
 
-                    <Button
+                    <button
                       type="button"
-                      variant="secondary"
-                      onClick={() => onDelete(student.id)}
-                      className="text-red-600 hover:text-red-700"
+                      onClick={() => onEdit(student)}
+                      title="Edit"
+                      className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     >
-                      Delete
-                    </Button>
+                      <Edit3 size={16} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onDelete(student.id)}
+                      title="Delete"
+                      className="inline-flex items-center justify-center rounded-lg p-2 text-red-500 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </td>
               </tr>
