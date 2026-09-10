@@ -1,6 +1,6 @@
 import { Button } from "@/components/common/button";
 
-import type { Student } from "./types";
+import type { Student } from "./type";
 
 type StudentTableProps = {
   students: Student[];

@@ -6,7 +6,7 @@ import { Input } from "@/components/common/input";
 
 import StudentModal from "./studentmodal";
 import StudentTable from "./studenttable";
-import type { Student, StudentFormData } from "./types";
+import type { Student, StudentFormData } from "./type";
 
 const emptyStudent: StudentFormData = {
   studentId: "",

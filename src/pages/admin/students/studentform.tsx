@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
 
-import type { StudentFormData } from "./types";
+import type { StudentFormData } from "./type";
 
 type StudentFormProps = {
   form: StudentFormData;

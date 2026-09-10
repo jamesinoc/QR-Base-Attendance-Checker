@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 
 import StudentForm from "./studentform";
-import type { StudentFormData } from "./types";
+import type { StudentFormData } from "./type";
 
 type StudentModalProps = {
   form: StudentFormData;
