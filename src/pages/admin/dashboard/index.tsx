@@ -160,7 +160,7 @@ export default function Dashboard() {
               className="relative flex h-44 w-44 shrink-0 items-center justify-center rounded-full"
               style={
                 {
-                  background: `conic-gradient(#22c55e ${percentage}%, #fdba74 0%)`,
+                  background: `conic-gradient(#343a40 ${percentage}%, #dee2e6 0%)`,
                   "--pct": `${percentage}%`,
                 } as CSSProperties
               }

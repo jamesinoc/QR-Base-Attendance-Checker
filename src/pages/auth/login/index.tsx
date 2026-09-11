@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router";
 
 import { Button } from "@/components/common/button";
 import { Input } from "@/components/common/input";
+import logo from "@/assets/logo.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -32,8 +33,12 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
-            <span className="text-2xl font-bold">QR</span>
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#ffffff] text-white shadow-lg">
+            <img
+              src={logo}
+              alt="Teacher Attendance logo"
+              className="h-14 w-14 rounded-xl object-contain"
+            />
           </div>
 
           <h1 className="text-3xl font-bold text-slate-900">
