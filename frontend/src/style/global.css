@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-white: #dee2e6;
+  --color-slate-50: #e9ecef;
+  --color-slate-100: #e9ecef;
+  --color-slate-200: #dee2e6;
+  --color-slate-300: #adb5bd;
+  --color-slate-400: #6c757d;
+  --color-slate-500: #6c757d;
+  --color-slate-600: #495057;
+  --color-slate-700: #343a40;
+  --color-slate-900: #343a40;
+  --color-blue-50: #e9ecef;
+  --color-blue-100: #e9ecef;
+  --color-blue-200: #dee2e6;
+  --color-blue-500: #343a40;
+  --color-blue-600: #343a40;
+  --color-blue-700: #495057;
+  --color-blue-800: #343a40;
+  --color-green-50: #dcfce7;
+  --color-green-100: #dcfce7;
+  --color-green-200: #86efac;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+  --color-green-900: #14532d;
+  --color-orange-50: #ffedd5;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-900: #7c2d12;
+  --color-red-50: #fee2e2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-900: #7f1d1d;
+}
